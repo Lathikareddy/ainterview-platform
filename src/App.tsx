@@ -1,6 +1,5 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider } from './context/AuthContext';
 // Import all screens
 import {
@@ -72,14 +71,11 @@ import {
   Settings } from
 './pages/CommunityScreens';
 import { ScreenIndex } from './pages/ScreenIndex';
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
-
 export function App() {
   return (
-    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-      <AuthProvider>
-        <BrowserRouter>
-      <Routes>
+    <AuthProvider>
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
+        <Routes>
         {/* Directory */}
         <Route path="/screens" element={<ScreenIndex />} />
 
@@ -155,19 +151,8 @@ export function App() {
         <Route path="/community" element={<CommunityLeaderboard />} />
         <Route path="/community-mentor" element={<CommunityMentor />} />
         <Route path="/settings" element={<Settings />} />
-      </Routes>
-
-      {/* Floating Directory Button for easy navigation during review */}
-      <div className="fixed bottom-20 md:bottom-4 right-4 z-50">
-        <a
-          href="/screens"
-          className="bg-slate-900 text-white px-4 py-2 rounded-full shadow-lg text-sm font-medium hover:bg-slate-800 transition-colors flex items-center gap-2">
-          
-          Screen Index
-        </a>
-      </div>
-    </BrowserRouter>
-      </AuthProvider>
-    </GoogleOAuthProvider>
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
