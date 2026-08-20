@@ -1,5 +1,6 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, HashRouter, Routes, Route, Link } from 'react-router-dom';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider } from './context/AuthContext';
 // Import all screens
 import {
@@ -71,88 +72,108 @@ import {
   Settings } from
 './pages/CommunityScreens';
 import { ScreenIndex } from './pages/ScreenIndex';
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+
 export function App() {
+  const isCapacitor = 
+    (window.location.hostname === 'localhost' && !window.location.port) ||
+    window.location.protocol === 'file:' ||
+    (window as any).Capacitor;
+
+  const Router = isCapacitor ? HashRouter : BrowserRouter;
+
   return (
-    <AuthProvider>
-      <BrowserRouter basename={import.meta.env.BASE_URL}>
-        <Routes>
-        {/* Directory */}
-        <Route path="/screens" element={<ScreenIndex />} />
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <AuthProvider>
+        <Router>
+          <Routes>
+            {/* Directory */}
+            <Route path="/screens" element={<ScreenIndex />} />
 
-        {/* Auth & Onboarding */}
-        <Route path="/" element={<GoogleAuthScreen />} />
-        <Route path="/splash" element={<Splash />} />
-        <Route path="/onboarding-1" element={<Onboarding1 />} />
-        <Route path="/onboarding-2" element={<Onboarding2 />} />
-        <Route path="/onboarding-3" element={<Onboarding3 />} />
-        <Route path="/signin" element={<SignIn />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        
+            {/* Auth & Onboarding */}
+            <Route path="/" element={<GoogleAuthScreen />} />
+            <Route path="/splash" element={<Splash />} />
+            <Route path="/onboarding-1" element={<Onboarding1 />} />
+            <Route path="/onboarding-2" element={<Onboarding2 />} />
+            <Route path="/onboarding-3" element={<Onboarding3 />} />
+            <Route path="/signin" element={<SignIn />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            
 
-        {/* Setup */}
-        <Route path="/setup-basic" element={<SetupBasicInfo />} />
-        <Route path="/setup-career" element={<SetupCareerGoal />} />
-        <Route path="/setup-experience" element={<SetupExperience />} />
-        <Route path="/setup-industry" element={<SetupIndustry />} />
-        <Route path="/setup-skills" element={<SetupSkills />} />
+            {/* Setup */}
+            <Route path="/setup-basic" element={<SetupBasicInfo />} />
+            <Route path="/setup-career" element={<SetupCareerGoal />} />
+            <Route path="/setup-experience" element={<SetupExperience />} />
+            <Route path="/setup-industry" element={<SetupIndustry />} />
+            <Route path="/setup-skills" element={<SetupSkills />} />
 
-        {/* Home */}
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/search" element={<SearchBrowse />} />
-        <Route path="/categories" element={<Categories />} />
-        <Route path="/recommended" element={<Recommended />} />
-        <Route path="/notifications" element={<Notifications />} />
+            {/* Home */}
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/search" element={<SearchBrowse />} />
+            <Route path="/categories" element={<Categories />} />
+            <Route path="/recommended" element={<Recommended />} />
+            <Route path="/notifications" element={<Notifications />} />
 
-        {/* Interview Setup */}
-        <Route path="/interview-setup" element={<InterviewType />} />
-        <Route path="/interview-role" element={<InterviewRole />} />
-        <Route path="/interview-difficulty" element={<InterviewDifficulty />} />
-        <Route path="/interview-format" element={<InterviewFormat />} />
-        <Route path="/interview-precheck" element={<PreCheck />} />
+            {/* Interview Setup */}
+            <Route path="/interview-setup" element={<InterviewType />} />
+            <Route path="/interview-role" element={<InterviewRole />} />
+            <Route path="/interview-difficulty" element={<InterviewDifficulty />} />
+            <Route path="/interview-format" element={<InterviewFormat />} />
+            <Route path="/interview-precheck" element={<PreCheck />} />
 
-        {/* Live */}
-        <Route path="/live-waiting" element={<LiveWaiting />} />
-        <Route path="/live-video" element={<LiveVideo />} />
-        <Route path="/live-voice" element={<LiveVoice />} />
-        <Route path="/live-text" element={<LiveText />} />
-        <Route path="/live-pause" element={<LivePause />} />
+            {/* Live */}
+            <Route path="/live-waiting" element={<LiveWaiting />} />
+            <Route path="/live-video" element={<LiveVideo />} />
+            <Route path="/live-voice" element={<LiveVoice />} />
+            <Route path="/live-text" element={<LiveText />} />
+            <Route path="/live-pause" element={<LivePause />} />
 
-        {/* Feedback */}
-        <Route path="/feedback-summary" element={<FeedbackSummary />} />
-        <Route path="/feedback-detailed" element={<FeedbackDetailed />} />
-        <Route path="/feedback-confidence" element={<FeedbackConfidence />} />
-        <Route path="/feedback-speech" element={<FeedbackSpeech />} />
-        <Route path="/feedback-body" element={<FeedbackBody />} />
-        <Route path="/feedback-answers" element={<FeedbackAnswers />} />
-        <Route
-          path="/feedback-improvements"
-          element={<FeedbackImprovements />} />
-        
-        <Route path="/ai-vs-traditional" element={<AIVsTraditional />} />
+            {/* Feedback */}
+            <Route path="/feedback-summary" element={<FeedbackSummary />} />
+            <Route path="/feedback-detailed" element={<FeedbackDetailed />} />
+            <Route path="/feedback-confidence" element={<FeedbackConfidence />} />
+            <Route path="/feedback-speech" element={<FeedbackSpeech />} />
+            <Route path="/feedback-body" element={<FeedbackBody />} />
+            <Route path="/feedback-answers" element={<FeedbackAnswers />} />
+            <Route
+              path="/feedback-improvements"
+              element={<FeedbackImprovements />} />
+            
+            <Route path="/ai-vs-traditional" element={<AIVsTraditional />} />
 
-        {/* Analytics */}
-        <Route path="/analytics" element={<AnalyticsDashboard />} />
-        <Route path="/analytics-trends" element={<AnalyticsTrends />} />
-        <Route path="/analytics-heatmap" element={<AnalyticsHeatmap />} />
-        <Route
-          path="/analytics-achievements"
-          element={<AnalyticsAchievements />} />
-        
-        <Route path="/history" element={<AnalyticsHistory />} />
+            {/* Analytics */}
+            <Route path="/analytics" element={<AnalyticsDashboard />} />
+            <Route path="/analytics-trends" element={<AnalyticsTrends />} />
+            <Route path="/analytics-heatmap" element={<AnalyticsHeatmap />} />
+            <Route
+              path="/analytics-achievements"
+              element={<AnalyticsAchievements />} />
+            
+            <Route path="/history" element={<AnalyticsHistory />} />
 
-        {/* Practice */}
-        <Route path="/practice" element={<PracticeQBank />} />
-        <Route path="/practice-answer" element={<PracticeAnswer />} />
-        <Route path="/practice-mocks" element={<PracticeMockLib />} />
-        <Route path="/practice-daily" element={<PracticeDaily />} />
-        <Route path="/practice-resources" element={<PracticeResources />} />
+            {/* Practice */}
+            <Route path="/practice" element={<PracticeQBank />} />
+            <Route path="/practice-answer" element={<PracticeAnswer />} />
+            <Route path="/practice-mocks" element={<PracticeMockLib />} />
+            <Route path="/practice-daily" element={<PracticeDaily />} />
+            <Route path="/practice-resources" element={<PracticeResources />} />
 
-        {/* Community & Settings */}
-        <Route path="/community" element={<CommunityLeaderboard />} />
-        <Route path="/community-mentor" element={<CommunityMentor />} />
-        <Route path="/settings" element={<Settings />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+            {/* Community & Settings */}
+            <Route path="/community" element={<CommunityLeaderboard />} />
+            <Route path="/community-mentor" element={<CommunityMentor />} />
+            <Route path="/settings" element={<Settings />} />
+          </Routes>
+
+          {/* Floating Directory Button for easy navigation during review */}
+          <div className="fixed bottom-20 md:bottom-4 right-4 z-50">
+            <Link
+              to="/screens"
+              className="bg-slate-900 text-white px-4 py-2 rounded-full shadow-lg text-sm font-medium hover:bg-slate-800 transition-colors flex items-center gap-2">
+              Screen Index
+            </Link>
+          </div>
+        </Router>
+      </AuthProvider>
+    </GoogleOAuthProvider>
   );
 }

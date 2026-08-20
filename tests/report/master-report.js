@@ -20,10 +20,10 @@ function main() {
   console.log('📋 Generating Master Combined Report...');
   if (!fs.existsSync(REPORTS_DIR)) fs.mkdirSync(REPORTS_DIR, { recursive: true });
 
-  const selenium = readReport('Web_E2E_Test_Report.xlsx');
+  const selenium = readReport('Web_E2E_Test_Report.xlsx') || readReport('Web_Selenium_E2E_Report.xlsx');
   const vuln = readReport('Vulnerability_Test_Report.xlsx');
   const load = readReport('Load_Test_Report.xlsx');
-  const appium = readReport('Appium_Mobile_Test_Report.xlsx');
+  const appium = readReport('Appium_Mobile_Test_Report.xlsx') || readReport('Appium_Mobile_E2E_Report.xlsx');
 
   const masterSummary = [
     { TestSuite: 'Selenium E2E', ...(selenium ? Object.fromEntries(selenium.map(r => [r.Metric, r.Value])) : { Note: 'Report not found' }) },
@@ -36,7 +36,14 @@ function main() {
   xlsx.utils.book_append_sheet(wb, xlsx.utils.json_to_sheet(masterSummary), 'Master Summary');
 
   // Include all individual sheets
-  ['Web_E2E_Test_Report.xlsx', 'Vulnerability_Test_Report.xlsx', 'Load_Test_Report.xlsx', 'Appium_Mobile_Test_Report.xlsx'].forEach(file => {
+  [
+    'Web_E2E_Test_Report.xlsx',
+    'Web_Selenium_E2E_Report.xlsx',
+    'Vulnerability_Test_Report.xlsx',
+    'Load_Test_Report.xlsx',
+    'Appium_Mobile_Test_Report.xlsx',
+    'Appium_Mobile_E2E_Report.xlsx'
+  ].forEach(file => {
     const full = path.join(REPORTS_DIR, file);
     if (!fs.existsSync(full)) return;
     const src = xlsx.readFile(full);

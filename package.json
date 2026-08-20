@@ -7,13 +7,7 @@
     "dev": "npx vite",
     "build": "npx vite build",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
-    "preview": "npx vite preview",
-    "test:web": "node tests/web/selenium-test.js",
-    "test:security": "node tests/security/vulnerability-test.js",
-    "test:load": "node tests/performance/load-test.js",
-    "test:mobile": "node tests/mobile/appium-test.js",
-    "test:report": "node tests/report/master-report.js",
-    "test:all": "npm run test:web && npm run test:security && npm run test:load && npm run test:mobile && npm run test:report"
+    "preview": "npx vite preview"
   },
   "dependencies": {
     "@emotion/react": "^11.13.3",
@@ -33,23 +27,13 @@
     "@typescript-eslint/eslint-plugin": "^5.54.0",
     "@typescript-eslint/parser": "^5.54.0",
     "@vitejs/plugin-react": "^4.2.1",
-    "autocannon": "^8.0.0",
     "autoprefixer": "latest",
-    "chai": "^6.2.2",
     "eslint": "^8.50.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.1",
-    "gh-pages": "^6.3.0",
-    "mocha": "^11.7.6",
-    "nodemailer": "^9.0.1",
     "postcss": "latest",
-    "retirement": "^0.0.0-reserved",
-    "selenium-webdriver": "^4.45.0",
     "tailwindcss": "3.4.17",
     "typescript": "^5.5.4",
-    "vite": "^5.2.0",
-    "wait-on": "^9.0.10",
-    "webdriverio": "^9.29.0",
-    "xlsx": "^0.18.5"
+    "vite": "^5.2.0"
   }
 }

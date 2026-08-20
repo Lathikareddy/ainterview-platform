@@ -37,6 +37,12 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// ─── Check if Firebase is properly configured ────────────────────────────────
+function isFirebaseConfigured(): boolean {
+  const key = import.meta.env.VITE_FIREBASE_API_KEY;
+  return !!(key && key !== 'YOUR_API_KEY_HERE' && key.trim() !== '');
+}
+
 // ─── Firestore helpers ────────────────────────────────────────────────────────
 async function upsertUserInFirestore(fbUser: FirebaseUser, extra: Partial<UserProfile> = {}) {
   const ref = doc(db, 'users', fbUser.uid);
@@ -77,17 +83,21 @@ function mapFirebaseUser(fbUser: FirebaseUser, firestoreData?: UserProfile): Use
 
 function friendlyError(code: string): string {
   switch (code) {
-    case 'auth/invalid-email': return 'Invalid email address.';
-    case 'auth/user-disabled': return 'This account has been disabled.';
-    case 'auth/user-not-found': return 'No account found with this email.';
-    case 'auth/wrong-password': return 'Incorrect password. Please try again.';
-    case 'auth/email-already-in-use': return 'Email already registered. Please sign in.';
-    case 'auth/weak-password': return 'Password must be at least 6 characters.';
-    case 'auth/popup-closed-by-user': return 'Sign-in window was closed. Please try again.';
+    case 'auth/invalid-email':          return 'Invalid email address.';
+    case 'auth/user-disabled':          return 'This account has been disabled.';
+    case 'auth/user-not-found':         return 'No account found with this email.';
+    case 'auth/wrong-password':         return 'Incorrect password. Please try again.';
+    case 'auth/email-already-in-use':   return 'Email already registered. Please sign in instead.';
+    case 'auth/weak-password':          return 'Password must be at least 6 characters.';
+    case 'auth/popup-closed-by-user':   return 'Sign-in cancelled. Please try again.';
+    case 'auth/popup-blocked':          return 'Popup was blocked. Please allow popups for this site.';
+    case 'auth/cancelled-popup-request': return 'Sign-in cancelled. Please try again.';
     case 'auth/network-request-failed': return 'Network error. Please check your connection.';
-    case 'auth/too-many-requests': return 'Too many attempts. Please wait a moment and try again.';
-    case 'auth/invalid-credential': return 'Incorrect email or password.';
-    default: return 'Authentication failed. Please try again.';
+    case 'auth/too-many-requests':      return 'Too many attempts. Please wait and try again.';
+    case 'auth/invalid-credential':     return 'Incorrect email or password.';
+    case 'auth/invalid-api-key':        return '⚠️ Firebase API key is invalid. Please check your .env.local file.';
+    case 'auth/operation-not-allowed':  return '⚠️ This sign-in method is not enabled. Go to Firebase Console → Authentication → Sign-in method and enable Email/Password and Google.';
+    default: return `Authentication failed (${code}). Please try again.`;
   }
 }
 
@@ -97,8 +107,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Listen to Firebase Auth state — works across all devices automatically
+  // Listen to Firebase Auth state
   useEffect(() => {
+    if (!isFirebaseConfigured()) {
+      setIsLoading(false);
+      return;
+    }
     const unsub = onAuthStateChanged(auth, async (fbUser) => {
       if (fbUser) {
         try {
@@ -108,13 +122,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const profile = mapFirebaseUser(fbUser, firestoreData);
           setFirebaseUser(fbUser);
           setUser(profile);
-          // Mirror to localStorage for offline reads / setup-complete check
           localStorage.setItem('userProfile', JSON.stringify(profile));
           if (firestoreData) {
             localStorage.setItem('setupComplete', 'true');
           }
         } catch (e) {
           console.error('Auth state error:', e);
+          // Still set user from Firebase even if Firestore fails
+          const profile = mapFirebaseUser(fbUser);
+          setUser(profile);
+          setFirebaseUser(fbUser);
+          localStorage.setItem('userProfile', JSON.stringify(profile));
         }
       } else {
         setFirebaseUser(null);
@@ -128,30 +146,62 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // ── Google Sign-In ──────────────────────────────────────────────────────────
   const loginWithGoogle = async (): Promise<{ success: boolean; error?: string }> => {
+    if (!isFirebaseConfigured()) {
+      return {
+        success: false,
+        error: '⚠️ Firebase is not configured. Please add your real Firebase credentials to .env.local and restart the dev server.',
+      };
+    }
     try {
+      // signInWithPopup opens the Google account picker (forced by prompt: select_account in firebase.ts)
       const result = await signInWithPopup(auth, googleProvider);
-      const firestoreData = await upsertUserInFirestore(result.user, { provider: 'google' });
-      const profile = mapFirebaseUser(result.user, firestoreData);
-      setFirebaseUser(result.user);
-      setUser(profile);
-      localStorage.setItem('userProfile', JSON.stringify(profile));
-      localStorage.setItem('setupComplete', 'true');
+      try {
+        // Try to save to Firestore (may fail if Firestore rules are strict or not set up)
+        const firestoreData = await upsertUserInFirestore(result.user, { provider: 'google' });
+        const profile = mapFirebaseUser(result.user, firestoreData);
+        setFirebaseUser(result.user);
+        setUser(profile);
+        localStorage.setItem('userProfile', JSON.stringify(profile));
+        localStorage.setItem('setupComplete', 'true');
+      } catch (fsErr) {
+        console.warn('Firestore write failed (check rules), using Firebase Auth data only:', fsErr);
+        // Still succeed — use just Firebase Auth data
+        const profile = mapFirebaseUser(result.user);
+        setFirebaseUser(result.user);
+        setUser(profile);
+        localStorage.setItem('userProfile', JSON.stringify(profile));
+        localStorage.setItem('setupComplete', 'true');
+      }
       return { success: true };
     } catch (e: any) {
+      console.error('Google Sign-In error:', e.code, e.message);
       return { success: false, error: friendlyError(e.code) };
     }
   };
 
   // ── Email + Password Sign-In ────────────────────────────────────────────────
   const loginWithPassword = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    if (!isFirebaseConfigured()) {
+      return {
+        success: false,
+        error: '⚠️ Firebase is not configured. Please add your Firebase credentials to .env.local.',
+      };
+    }
     try {
       if (!email || !password) return { success: false, error: 'Email and password are required.' };
       const result = await signInWithEmailAndPassword(auth, email, password);
-      const firestoreData = await upsertUserInFirestore(result.user);
-      const profile = mapFirebaseUser(result.user, firestoreData);
-      setUser(profile);
-      localStorage.setItem('userProfile', JSON.stringify(profile));
-      localStorage.setItem('setupComplete', 'true');
+      try {
+        const firestoreData = await upsertUserInFirestore(result.user);
+        const profile = mapFirebaseUser(result.user, firestoreData);
+        setUser(profile);
+        localStorage.setItem('userProfile', JSON.stringify(profile));
+        localStorage.setItem('setupComplete', 'true');
+      } catch {
+        const profile = mapFirebaseUser(result.user);
+        setUser(profile);
+        localStorage.setItem('userProfile', JSON.stringify(profile));
+        localStorage.setItem('setupComplete', 'true');
+      }
       return { success: true };
     } catch (e: any) {
       return { success: false, error: friendlyError(e.code) };
@@ -160,19 +210,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // ── Register ────────────────────────────────────────────────────────────────
   const registerWithPassword = async (email: string, password: string, name: string): Promise<{ success: boolean; error?: string }> => {
+    if (!isFirebaseConfigured()) {
+      return {
+        success: false,
+        error: '⚠️ Firebase is not configured. Please add your Firebase credentials to .env.local.',
+      };
+    }
     try {
       if (!email || !password || !name) return { success: false, error: 'All fields are required.' };
       if (password.length < 6) return { success: false, error: 'Password must be at least 6 characters.' };
 
       const result = await createUserWithEmailAndPassword(auth, email, password);
-      // Set display name in Firebase Auth
       await firebaseUpdateProfile(result.user, { displayName: name });
-      // Store in Firestore
-      const firestoreData = await upsertUserInFirestore(result.user, { name, provider: 'password' });
-      const profile = mapFirebaseUser(result.user, firestoreData);
-      setUser(profile);
-      localStorage.setItem('userProfile', JSON.stringify(profile));
-      localStorage.setItem('userName', name);
+      try {
+        const firestoreData = await upsertUserInFirestore(result.user, { name, provider: 'password' });
+        const profile = mapFirebaseUser(result.user, firestoreData);
+        setUser(profile);
+        localStorage.setItem('userProfile', JSON.stringify(profile));
+        localStorage.setItem('userName', name);
+      } catch {
+        const profile = mapFirebaseUser(result.user);
+        setUser(profile);
+        localStorage.setItem('userProfile', JSON.stringify(profile));
+        localStorage.setItem('userName', name);
+      }
       return { success: true };
     } catch (e: any) {
       return { success: false, error: friendlyError(e.code) };
@@ -181,7 +242,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // ── Logout ──────────────────────────────────────────────────────────────────
   const logout = async () => {
-    await signOut(auth);
+    if (isFirebaseConfigured()) await signOut(auth);
     setUser(null);
     setFirebaseUser(null);
     localStorage.removeItem('userProfile');

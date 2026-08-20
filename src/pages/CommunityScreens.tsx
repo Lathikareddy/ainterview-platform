@@ -123,7 +123,7 @@ export const CommunityMentor = () => (
 
 // ─── Switch Account Modal ─────────────────────────────────────────────
 const SwitchAccountModal = ({ onClose }: { onClose: () => void }) => {
-  const { loginWithPassword } = useAuth();
+  const { loginWithPassword, logout } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -207,7 +207,16 @@ const SwitchAccountModal = ({ onClose }: { onClose: () => void }) => {
             </button>
             <p className="text-center text-xs text-slate-400">
               Don't have an account?{' '}
-              <button onClick={() => { onClose(); navigate('/'); }} className="text-indigo-600 font-semibold hover:underline">Create one</button>
+              <button
+                onClick={async () => {
+                  onClose();
+                  await logout();
+                  navigate('/?signup=1');
+                }}
+                className="text-indigo-600 font-semibold hover:underline"
+              >
+                Create one
+              </button>
             </p>
           </div>
         )}
