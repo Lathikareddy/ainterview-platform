@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "762318025923",
+    "project_id": "ainterview-platform",
+    "storage_bucket": "ainterview-platform.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:762318025923:android:e92408b066d123456789ab",
+        "android_client_info": {
+          "package_name": "com.ainterview.ainterview"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDIGsJExbfhvSc17P-9La7DCPDbtxZawao"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

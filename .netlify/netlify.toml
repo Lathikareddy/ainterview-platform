@@ -1,3 +1,4 @@
+redirectsOrigin = "config"
 plugins = []
 headers = []
 
@@ -6,9 +7,9 @@ headers = []
 [functions."*"]
 
 [build]
-publish = "C:\\Users\\lathi\\Downloads\\lathika pdd\\dist"
-publishOrigin = "ui"
-commandOrigin = "ui"
+publish = "C:\\Users\\lathi\\OneDrive\\IMP CERTIFICATES\\lathika pdd\\dist"
+publishOrigin = "config"
+commandOrigin = "config"
 command = "npm run build"
 
 [build.environment]

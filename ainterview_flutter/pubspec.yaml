@@ -1,0 +1,51 @@
+name: ainterview
+description: AInterview - AI Interview Simulator. Master your next interview with AI-powered coaching.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Firebase
+  firebase_core: ^3.3.0
+  firebase_auth: ^5.1.4
+  cloud_firestore: ^5.2.1
+  google_sign_in: ^6.2.1
+
+  # Navigation
+  go_router: ^14.2.7
+
+  # UI / Animations
+  animate_do: ^3.3.4
+  flutter_animate: ^4.5.0
+  lottie: ^3.1.2
+  shimmer: ^3.0.0
+
+  # State Management
+  provider: ^6.1.2
+
+  # Utilities
+  shared_preferences: ^2.3.1
+  intl: ^0.19.0
+  url_launcher: ^6.3.0
+  cached_network_image: ^3.4.1
+  percent_indicator: ^4.2.3
+  fl_chart: ^0.68.0
+  speech_to_text: ^6.6.2
+  permission_handler: ^11.3.1
+  camera: ^0.11.0+2
+
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+
