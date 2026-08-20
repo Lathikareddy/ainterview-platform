@@ -1,0 +1,54 @@
+name: 3 - Load & Performance Tests
+
+on:
+  push:
+    branches: [main, master, dev]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  load-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Install autocannon and xlsx for load testing
+        run: npm install --no-save autocannon xlsx wait-on
+
+      - name: Start dev server in background
+        run: |
+          npm run dev &
+          echo "Waiting for server..."
+          npx wait-on http://localhost:5173 --timeout 30000 || true
+        env:
+          VITE_FIREBASE_API_KEY: placeholder
+          VITE_FIREBASE_AUTH_DOMAIN: placeholder
+          VITE_FIREBASE_PROJECT_ID: placeholder
+
+      - name: Run Load & Performance Tests (336 scenarios)
+        run: node tests/performance/load-test.js
+        continue-on-error: true
+
+      - name: List generated reports
+        run: ls -lh reports/ || echo "Checking..."
+
+      - name: Upload Load Test Excel Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Load-Performance-Test-Report-${{ github.run_number }}
+          path: reports/
+          retention-days: 30
+          if-no-files-found: warn
