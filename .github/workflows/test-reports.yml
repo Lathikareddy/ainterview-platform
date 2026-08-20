@@ -1,0 +1,97 @@
+name: Automated Test Suite & Excel Reports
+
+on:
+  push:
+    branches: [main, master, dev]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  test-and-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chrome for Selenium
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      - name: Start Vite dev server (background)
+        run: |
+          npm run dev &
+          echo "Waiting for dev server to be ready..."
+          npx wait-on http://localhost:5173/ainterview-platform/ --timeout 60000
+        env:
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+
+      # ── 1. Selenium E2E Tests ──────────────────────────────────────
+      - name: 🧪 Run Selenium E2E Tests (100+ cases)
+        run: node tests/web/selenium-test.js
+        continue-on-error: true
+        env:
+          DISPLAY: ':99'
+
+      # ── 2. Vulnerability / Security Tests ─────────────────────────
+      - name: 🔐 Run Vulnerability Tests
+        run: node tests/security/vulnerability-test.js
+        continue-on-error: true
+        env:
+          DISPLAY: ':99'
+
+      # ── 3. Load Tests ──────────────────────────────────────────────
+      - name: ⚡ Run Load Tests
+        run: node tests/performance/load-test.js
+        continue-on-error: true
+
+      # ── 4. Appium Mobile Report ────────────────────────────────────
+      - name: 📱 Generate Appium Mobile Report
+        run: node tests/mobile/appium-test.js
+        continue-on-error: true
+
+      # ── Master Report ──────────────────────────────────────────────
+      - name: 📋 Generate Master Combined Excel Report
+        run: node tests/report/master-report.js
+        if: always()
+
+      # ── Upload all Excel reports as Artifacts ──────────────────────
+      - name: 📤 Upload Test Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: TestReports-${{ github.run_number }}-${{ github.sha }}
+          path: |
+            reports/
+            tests/reports/
+          retention-days: 30
+          if-no-files-found: warn
+
+      # ── Summary ────────────────────────────────────────────────────
+      - name: 📊 Print Summary
+        if: always()
+        run: |
+          echo "======================================"
+          echo "  TEST SUITE RUN COMPLETE"
+          echo "======================================"
+          echo "Commit : ${{ github.sha }}"
+          echo "Branch : ${{ github.ref_name }}"
+          echo "Run    : ${{ github.run_number }}"
+          echo ""
+          echo "Reports generated:"
+          ls -lh reports/ 2>/dev/null || echo "(reports dir not found)"
+          ls -lh tests/reports/ 2>/dev/null || true
+          echo ""
+          echo "Download reports from the Actions Artifacts tab above ⬆️"
