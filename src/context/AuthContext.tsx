@@ -40,7 +40,15 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // ─── Check if Firebase is properly configured ────────────────────────────────
 function isFirebaseConfigured(): boolean {
   const key = import.meta.env.VITE_FIREBASE_API_KEY;
-  return !!(key && key !== 'YOUR_API_KEY_HERE' && key.trim() !== '');
+  if (!key || key.trim() === '') return false;
+  // Reject placeholder / test / CI values — these cause Firebase to hang indefinitely
+  const lk = key.toLowerCase();
+  if (lk === 'your_api_key_here' || lk === 'placeholder' || lk === 'test' ||
+      lk === 'demo' || lk.startsWith('000') || lk === 'null' || lk === 'undefined') {
+    return false;
+  }
+  // Real Firebase API keys start with "AIza"
+  return key.startsWith('AIza');
 }
 
 // ─── Firestore helpers ────────────────────────────────────────────────────────

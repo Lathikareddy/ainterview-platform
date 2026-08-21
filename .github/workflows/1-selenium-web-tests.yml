@@ -33,22 +33,28 @@ jobs:
           chrome-version: stable
 
       - name: Start dev server in background
+        # IMPORTANT: VITE_FIREBASE_API_KEY must NOT start with "AIza" so isFirebaseConfigured()
+        # returns false → app skips Firebase auth → isLoading becomes false immediately →
+        # GoogleAuthScreen renders the form (email + password inputs, labels, form tags).
+        # This is required for all form-field and A11y tests to pass.
         continue-on-error: true
         run: |
           npm run dev &
-          echo "Dev server started, waiting for http://localhost:5173..."
-          npx wait-on http://localhost:5173 --timeout 60000 || echo "Server may not be ready, continuing..."
+          echo "Waiting for Vite dev server on port 5173..."
+          npx wait-on http://localhost:5173 --timeout 60000 || echo "Server wait timed out, continuing..."
         env:
-          VITE_FIREBASE_API_KEY: placeholder
-          VITE_FIREBASE_AUTH_DOMAIN: placeholder.firebaseapp.com
-          VITE_FIREBASE_PROJECT_ID: placeholder
-          VITE_FIREBASE_STORAGE_BUCKET: placeholder.appspot.com
+          VITE_FIREBASE_API_KEY: YOUR_API_KEY_HERE
+          VITE_FIREBASE_AUTH_DOMAIN: your-project.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: your-project-id
+          VITE_FIREBASE_STORAGE_BUCKET: your-project.appspot.com
           VITE_FIREBASE_MESSAGING_SENDER_ID: "000000000000"
-          VITE_FIREBASE_APP_ID: 1:000000000000:web:placeholder
-          VITE_GOOGLE_CLIENT_ID: placeholder.apps.googleusercontent.com
+          VITE_FIREBASE_APP_ID: 1:000000000000:web:000000000000
+          VITE_GOOGLE_CLIENT_ID: your-client.apps.googleusercontent.com
 
-      - name: Verify server is running
-        run: curl -s --max-time 10 http://localhost:5173 | head -5 || echo "Server check done"
+      - name: Verify server responds
+        run: |
+          sleep 2
+          curl -s --max-time 15 http://localhost:5173 | grep -q "AInterview" && echo "✅ Server OK" || echo "⚠️ Server may not be ready"
 
       - name: Run Selenium E2E Tests (300+ test cases)
         run: node selenium-tests/tests/login-tests.js
