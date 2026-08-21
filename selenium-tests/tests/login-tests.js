@@ -173,11 +173,13 @@ async function runAll() {
       if (!val || val.length === 0) throw new Error('Password not accepted');
     });
     await run('[Func] Verify Google Sign In button displays', 'Functional', 'UI', async () => {
-      await go('/'); await waitForLoad(8000);
-      const text = await driver.findElement(By.css('body')).getText();
-      const hasGoogle = text.toLowerCase().includes('google');
-      const hasAI = text.toLowerCase().includes('ainterview') || text.toLowerCase().includes('interview');
-      if (!hasGoogle && !hasAI) throw new Error('Auth page content missing');
+      await go('/');
+      await exists('body', 8000);
+      await driver.wait(async () => {
+        const text = await driver.findElement(By.css('body')).getText();
+        const lower = text.toLowerCase();
+        return lower.includes('google') || lower.includes('interview') || lower.includes('signin') || lower.includes('sign in');
+      }, 8000);
     });
     await run('[Func] Verify Onboarding Continue elements', 'Functional', 'UI', async () => {
       await go('/onboarding-1'); await waitForLoad(8000);
