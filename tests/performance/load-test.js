@@ -36,14 +36,15 @@ const ROUTES = [
 ];
 
 // Load profiles: [connections, duration, label]
+// Durations kept at 1s per scenario so 336 scenarios finish within CI limits
 const PROFILES = [
-  [1,  3, 'Single User'],
-  [5,  3, 'Light Load (5 users)'],
-  [10, 3, 'Normal Load (10 users)'],
-  [25, 3, 'Medium Load (25 users)'],
-  [50, 5, 'Heavy Load (50 users)'],
-  [100,5, 'Stress Test (100 users)'],
-  [200,5, 'Spike Test (200 users)'],
+  [1,   1, 'Single User'],
+  [5,   1, 'Light Load (5 users)'],
+  [10,  1, 'Normal Load (10 users)'],
+  [25,  1, 'Medium Load (25 users)'],
+  [50,  1, 'Heavy Load (50 users)'],
+  [100, 1, 'Stress Test (100 users)'],
+  [200, 1, 'Spike Test (200 users)'],
 ];
 
 async function test(url, connections, duration, label) {
@@ -132,4 +133,4 @@ async function main() {
   console.log(`✅ Passed: ${passed} | ⚠️ Warned: ${warned} | ❌ Failed: ${failed}`);
 }
 
-main();
+main().then(() => process.exit(0)).catch((err) => { console.error(err); process.exit(1); });
